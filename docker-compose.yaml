@@ -1,0 +1,42 @@
+services:
+  plan-fact:
+    container_name: plan-fact
+    image: plan-fact
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    labels:
+      - "nginx.auth=true"
+      - "nginx.client_max_body_size=100m"  # Increase max upload size to 100MB
+    volumes:
+      - ingd_db:/app/excel_data
+      - ingd_instance:/app/instance
+    environment:
+      - BEHIND_PROXY=true
+    env_file:
+      - ./backend/.env  
+    networks:
+      - service_network
+      - public_network
+
+networks:
+  service_network:
+    external: true
+    name: service_network
+  public_network:
+    external: true
+    name: public_network
+
+volumes:
+  ingd_db:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./excel_data
+      o: bind
+  ingd_instance:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./instance
+      o: bind

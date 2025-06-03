@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Контроль цен продаж</title>
+        <!-- Use absolute paths for CSS files -->
+        <link rel="stylesheet" href="/plan-fact/static/style.css">
+        <link rel="stylesheet" href="/plan-fact/static/common.css">
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    </head>
+    <body>
+        <header>
+            <div class="top-left">
+                <a href="/">
+                    <img src="/plan-fact/static/image_2025-04-22_15-51-16.png" class="logo">
+                </a>
+            </div>
+            <div class="header_login">
+                <a href="/menu" class="nav__link"> Меню </a>
+            </div>
+        </header> 
+        <main class="main, center">
+            <div class="container">
+
+                <h1>Контроль цен продаж</h1>
+
+                <!-- Flash messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">{{ message
+                        }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% endwith %}
+                <!-- <div class="form-container"> -->
+                    <form id="last_count" name="last_count"
+                        action="/plan-fact/update-database"
+                        method="post"
+                        class="filter_form">
+                        <label for="currency">Валюта:</label>
+                        <select id="currency" name="currency">
+                            <option value="usd">USD</option>
+                            <option value="uzs">UZS</option>
+                        </select>
+                        <label for="last_count">Количество последних
+                            сделок:</label>
+                        <input type="number" id="last_count" name="last_count"
+                            value="{{ last_count }}" min="1" max="1000"
+                            default="3">
+                        <button type="submit">Обновить</button>
+                    </form>
+                    {% if current_user.role == 'admin' %}
+                    <form action="/plan-fact/upload" method="post" enctype="multipart/form-data" class="filter_form">
+                        <label for="xlsx_file">File updated at {{file_updated}}:</label>
+                        <!-- Ограничиваем выбор только .xlsx файлами -->
+                        <input type="file" id="xlsx_file" name="xlsx_file" accept=".xlsx" required>
+                        <button type="submit" class="primary-button">Upload File</button>
+                    </form>
+                    {% endif %}
+                <!-- </div> -->
+                <div class="table-container" style="width: 100%;">
+                    <label>Месяц обновления: {{month}}</label>
+                    <table id="calculationHistory_table" class="data-table"
+                        style="display: table;">
+                        <thead>
+                            <tr>
+                                <th>Название проекта</th>
+                                <th>Срок до кадастра мес.</th>
+                                <th>Максимальная скидка 100%</th>
+                                <th>План шт</th>
+                                <th>Факт шт</th>
+                                <th>Отклонение %</th>
+                                <!-- ДОБАВЛЕНЫ ID ЗДЕСЬ -->
+                                <th id="header-lowest-price">Цена дна
+                                    остатков</th>
+                                <th id="header-average-price">Средняя цена
+                                    последних
+                                    сделок</th>
+                                <!-- КОНЕЦ ДОБАВЛЕНИЯ ID -->
+                            </tr>
+                        </thead>
+                        <tbody id="calculationHistory_tbody">
+                            <!-- Строки таблицы генерируются Jinja2 -->
+                            {% if projects %}
+                            {% for project in projects %}
+                            {% if project.do_kadastra != 0 %}
+                            <tr>
+                                <td>{{ project.name }}</td>
+                                <td>{{ project.do_kadastra}}</td>
+                                <!-- Форматируем скидку как процент -->
+                                <td>{{
+                                    "{:.0%}".format(project.max_discount_full)
+                                    }}</td>
+                                <td>{{ project.plan_deals }}</td>
+                                <td>{{ project.fact_deals }}</td>
+                                <td>{{ 
+                                    "{:.0%}".format(project.deviation) }}
+                                </td>
+
+                                <td class="price-cell price-lowest"
+                                    data-price-uzs="{{ '{:,}'.format(project.lowest_price_full).replace(',', ' ') }}"
+                                    data-price-usd="{{ '{:,}'.format(project.lowest_price_full_dol).replace(',', ' ') }}">
+                                    <!-- Изначальное значение будет установлено скриптом -->
+                                </td>
+                                <td
+                                    class="price-cell price-average highlight{% if project.average_price_full >= project.lowest_price_full %} green{% else %} red{% endif %}"
+                                    data-price-uzs="{{ '{:,}'.format(project.average_price_full).replace(',', ' ') }}"
+                                    data-price-usd="{{ '{:,}'.format(project.average_price_full_dol).replace(',', ' ') }}">
+                                    <!-- Изначальное значение будет установлено скриптом -->
+                                </td>
+                            </tr>
+                            {% endif %}
+                            {% endfor %}
+                            {% else %}
+                            <tr>
+                                <!-- Исправлен colspan -->
+                                <td colspan="5" style="text-align: center;">No
+                                    projects available</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+                <!-- ... (внутри тега <script> в конце body) ... -->
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const currencySelect = document.getElementById('currency');
+                        const tableBody = document.getElementById('calculationHistory_tbody');
+                        const headerLowest = document.getElementById('header-lowest-price');
+                        const headerAverage = document.getElementById('header-average-price');
+                        // Ключ для сохранения в localStorage
+                        const currencyStorageKey = 'selectedCurrencyINGD';
+                    
+                        // Функция для обновления цен и заголовков
+                        function updatePrices() {
+                            const selectedCurrency = currencySelect.value; // 'usd' or 'uzs'
+                            const currencySuffix = selectedCurrency.toUpperCase(); // 'UZS' or 'USD'
+                        
+                            // Обновляем заголовки таблицы
+                            if (headerLowest) { // Проверка, что элемент найден
+                                headerLowest.textContent = `Цена дна остатков (${currencySuffix})`;
+                            }
+                            if (headerAverage) { // Проверка, что элемент найден
+                                headerAverage.textContent = `Средняя цена последних сделок (${currencySuffix})`;
+                            }
+                        
+                            // Находим все ячейки с ценами в теле таблицы
+                            const priceCells = tableBody.querySelectorAll('.price-cell');
+                        
+                            priceCells.forEach(cell => {
+                                let priceToShow = '';
+                                // Используем 'usd' как условие, иначе 'uzs'
+                                if (selectedCurrency === 'uzs') {
+                                    priceToShow = cell.dataset.priceUzs;
+                                } else {
+                                    priceToShow = cell.dataset.priceUsd;
+                                }
+                                cell.textContent = priceToShow; // Обновляем текст ячейки
+                            });
+                        }
+                    
+                        // --- ДОБАВЛЕНО: Загрузка сохраненной валюты ---
+                        const savedCurrency = localStorage.getItem(currencyStorageKey);
+                        if (savedCurrency && (savedCurrency === 'usd' || savedCurrency === 'uzs')) {
+                            currencySelect.value = savedCurrency; // Устанавливаем значение селекта
+                        }
+                        // --- КОНЕЦ ДОБАВЛЕНИЯ ---
+                    
+                        // Добавляем слушатель события 'change' к селекту
+                        currencySelect.addEventListener('change', function() {
+                            updatePrices();
+                            // --- ДОБАВЛЕНО: Сохранение выбранной валюты ---
+                            localStorage.setItem(currencyStorageKey, currencySelect.value);
+                            // --- КОНЕЦ ДОБАВЛЕНИЯ ---
+                        });
+                    
+                        // Вызываем функцию один раз при загрузке, чтобы установить начальное состояние
+                        // (теперь она будет использовать значение из localStorage, если оно было установлено)
+                        updatePrices();
+                    });
+                </script>
+                <!-- ... (конец файла) ... -->
+            </body>
+        </html>

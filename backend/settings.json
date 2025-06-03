@@ -1,0 +1,27 @@
+{
+    "sqltools.connections": [
+        {
+            "mysqlOptions": {
+                "authProtocol": "default",
+                "enableSsl": "Disabled"
+            },
+            "previewLimit": 50,
+            "server": "172.16.0.199",
+            "port": 9906,
+            "driver": "MySQL",
+            "username": "macro_bi_cmp_528",
+            "database": "macro_bi_cmp_528",
+            "password": "p[8qG^]Qf3v[qr*1",
+            "name": "macro_data"
+        }
+    ],
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        "./backend",
+        "-p",
+        "*test.py"
+    ],
+    "python.testing.pytestEnabled": false,
+    "python.testing.unittestEnabled": true
+}
