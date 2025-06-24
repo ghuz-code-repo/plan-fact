@@ -1,0 +1,134 @@
+/* CSS переменные для системы тем */
+:root {
+    /* Базовые цвета для светлой темы */
+    --body-background: #ffffff;
+    --container-background: #f5f5f5;
+    --card-background: #ffffff;
+    --header-background: #ffffff;
+    --text-primary: #333333;
+    --text-secondary: #666666;
+    --text-muted: #999999;
+    --border-color: #ddd;
+    --input-background: #ffffff;
+    --input-border: #ccc;
+    --table-background: #ffffff;
+    --table-header-background: #f8f9fa;
+    --table-hover: #f5f5f5;
+    --golden-color: #d4af37;
+    --hover-color: #b38e30;
+    
+    /* Тени и переходы */
+    --box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    --transition-normal: 0.3s ease;
+}
+
+/* Тёмная тема */
+.dark-theme {
+    --body-background: #121212;
+    --container-background: #1e1e1e;
+    --card-background: #2d2d2d;
+    --header-background: #1a1a1a;
+    --text-primary: #ffffff;
+    --text-secondary: #b0b0b0;
+    --text-muted: #888888;
+    --border-color: #404040;
+    --input-background: #2d2d2d;
+    --input-border: #404040;
+    --table-background: #2d2d2d;
+    --table-header-background: #3a3a3a;
+    --table-hover: #404040;
+    --golden-color: #ffd700;
+    --hover-color: #ffed4e;
+    --box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+/* Применение переменных */
+body {
+    background-color: var(--body-background) !important;
+    color: var(--text-primary) !important;
+    transition: all var(--transition-normal);
+}
+
+.container {
+    background-color: var(--container-background) !important;
+    color: var(--text-primary) !important;
+}
+
+header {
+    background-color: var(--header-background) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+.nav__link {
+    color: var(--text-primary) !important;
+}
+
+.nav__link:hover {
+    background-color: var(--table-hover) !important;
+}
+
+input, select, textarea {
+    background-color: var(--input-background) !important;
+    border-color: var(--input-border) !important;
+    color: var(--text-primary) !important;
+}
+
+table {
+    background-color: var(--table-background) !important;
+    color: var(--text-primary) !important;
+}
+
+thead {
+    background-color: var(--table-header-background) !important;
+}
+
+tr:hover {
+    background-color: var(--table-hover) !important;
+}
+
+th, td {
+    border-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
+}
+
+.table-container {
+    background-color: var(--card-background) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+/* Flash messages */
+.flash-messages {
+    color: var(--text-primary) !important;
+}
+
+.flash-message {
+    background-color: var(--card-background) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Labels */
+label {
+    color: var(--text-primary) !important;
+}
+
+/* Переключатель темы */
+#theme-switcher {
+    background: transparent !important;
+    border: 2px solid var(--golden-color) !important;
+    color: var(--golden-color) !important;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+#theme-switcher:hover {
+    background-color: var(--golden-color) !important;
+    color: var(--body-background) !important;
+}

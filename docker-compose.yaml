@@ -9,8 +9,10 @@ services:
       - "nginx.auth=true"
       - "nginx.client_max_body_size=100m"  # Increase max upload size to 100MB
     volumes:
-      - ingd_db:/app/excel_data
-      - ingd_instance:/app/instance
+      - ./excel_data:/app/excel_data
+      - ./instance:/app/instance
+      - ./backend/static:/app/static
+      - ./backend/templates:/app/templates
     environment:
       - BEHIND_PROXY=true
     env_file:
@@ -27,16 +29,3 @@ networks:
     external: true
     name: public_network
 
-volumes:
-  ingd_db:
-    driver: local
-    driver_opts:
-      type: none
-      device: ./excel_data
-      o: bind
-  ingd_instance:
-    driver: local
-    driver_opts:
-      type: none
-      device: ./instance
-      o: bind
