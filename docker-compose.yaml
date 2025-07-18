@@ -1,5 +1,6 @@
 services:
   plan-fact:
+    restart: always
     container_name: plan-fact
     image: plan-fact
     build:
